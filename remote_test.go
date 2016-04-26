@@ -177,3 +177,42 @@ func TestRemotePrune(t *testing.T) {
 		t.Fatal("Expected error getting a pruned reference")
 	}
 }
+
+func TestRemote_Fetch(t *testing.T) {
+	repo := createTestRepo(t)
+	defer cleanupTestRepo(t, repo)
+
+	remote, err := repo.Remotes.Create("origin", "https://github.com/libgit2/TestGitRepository")
+	checkFatal(t, err)
+
+	err = remote.Fetch([]string{}, &FetchOptions{}, "")
+	checkFatal(t, err)
+}
+
+func TestRemote_FetchNonExistentCredCb(t *testing.T) {
+	repo := createTestRepo(t)
+	defer cleanupTestRepo(t, repo)
+
+	remote, err := repo.Remotes.Create("origin", "https://github.com/libgit2/NonExistingRepo")
+	checkFatal(t, err)
+
+	err = remote.Fetch([]string{}, &FetchOptions{
+		RemoteCallbacks: RemoteCallbacks{
+			CredentialsCallback: func(url string, username_from_url string, allowed_types CredType) (ErrorCode, *Cred) {
+				return ErrGeneric, nil
+			},
+		},
+	}, "")
+	checkFatal(t, err)
+}
+
+func TestRemote_FetchNonExistent(t *testing.T) {
+	repo := createTestRepo(t)
+	defer cleanupTestRepo(t, repo)
+
+	remote, err := repo.Remotes.Create("origin", "https://github.com/libgit2/NonExistingRepo")
+	checkFatal(t, err)
+
+	err = remote.Fetch([]string{}, &FetchOptions{}, "")
+	checkFatal(t, err)
+}
